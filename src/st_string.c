@@ -46,9 +46,10 @@ b32 ST_read_entire_file(ST_arena_t *arena, ST_string_t *sv, const char *path)
     u32 file_size = (u32)ftell(f);
     fseek(f, 0, SEEK_SET);
 
-    sv->data = ST_arena_push_zeroed(arena, sizeof(*sv->data) * file_size);
+    sv->data = ST_arena_push_zeroed(arena, (u32)file_size);
 
     if (fread((char *)sv->data, 1, file_size, f) <= 0) return -1;
     sv->len = file_size;
+    fclose(f);
     return 0;
 }

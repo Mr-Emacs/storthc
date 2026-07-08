@@ -47,10 +47,11 @@ static u32 ST_build_levels_(u32 cap, ST_level_t lvls[ST_MAX_LVL])
 
 void ST_ht_init(ST_arena_t *arena, ST_ht_t *ht, u32 init_cap)
 {
-    ST_assert(ht->arena != NULL);
     ST_assert(ht != NULL);
+    ST_assert(arena != NULL);
 
-    u32 capacity = init_cap < sizeof(capacity) ? init_cap : sizeof(capacity);
+    u32 capacity = init_cap < 8 ? 8 : init_cap;
+    ht->arena = arena;
     ht->slots = ST_arena_push_zeroed(arena,
                                      sizeof(*ht->slots) * capacity);
     ht->capacity = capacity;
@@ -128,8 +129,7 @@ static void ST_ht_grow(ST_ht_t *ht)
 {
     u32 old_cap = ht->capacity;
     ST_ht_slots_t *old_slots = ht->slots;
-    u32 new_cap = old_cap < 8 ? 8 : old_cap;
-
+    u32 new_cap = old_cap < 8 ? 8 : old_cap * 2;
 
     ht->slots = ST_arena_push_zeroed(ht->arena, sizeof((*ht->slots)) * new_cap);
     ht->capacity = new_cap;
@@ -141,19 +141,16 @@ static void ST_ht_grow(ST_ht_t *ht)
         {
             if (old_slots[i].key != NULL && old_slots[i].key != ST_TOMBSTONE)
             {
-                ST_ht_generic_t v = *old_slots[i].value;
-                free(old_slots[i].value);
-                ST_ht_set(ht, old_slots[i].key, v);
+                ST_ht_set(ht, old_slots[i].key, *old_slots[i].value);
             }
         }
-        free(old_slots);
     }
 }
 
 static u32 st_count_free(ST_ht_t *ht, ST_level_t lvl)
 {
     u32 free_count = 0;
-    for (u32 i = 0; i < lvl.size; i++)
+    ST_forrange(0, lvl.size)
     {
         if (ST_slot_free(ht->slots[lvl.start + i].key)) free_count++;
     }
@@ -162,12 +159,11 @@ static u32 st_count_free(ST_ht_t *ht, ST_level_t lvl)
 
 static b32 st_try_place(ST_ht_t *ht, ST_level_t lvl, ST_ht_generic_t *key, ST_ht_generic_t value, u32 level_index, u32 budget)
 {
-    u32 j;
     if (budget > lvl.size) budget = lvl.size;
 
-    for (j = 0; j < budget; j++)
+    ST_forrange(0, budget)
     {
-        u32 slot = lvl.start + ST_probe_slot(key, level_index, j, lvl.size);
+        u32 slot = lvl.start + ST_probe_slot(key, level_index, i, lvl.size);
         if (ST_slot_free(ht->slots[slot].key))
         {
             ST_ht_generic_t *stored = ST_arena_push(ht->arena, sizeof(*stored));
@@ -268,26 +264,9 @@ ST_ht_generic_t ST_ht_delete(ST_ht_t *ht, ST_ht_generic_t key)
     if (slot < ht->capacity)
     {
         removed = *ht->slots[slot].value;
-        free(ht->slots[slot].value);
-        ht->slots[slot].value = ST_TOMBSTONE;
+        ht->slots[slot].key = ST_TOMBSTONE;
         ht->count--;
     }
 
     return removed;
-}
-
-void ST_ht_free(ST_ht_t *ht)
-{
-    if (!ht) return;
-    if (ht->slots)
-    {
-        for (u32 i = 0; i < ht->capacity; i++)
-        {
-            if (ht->slots[i].value) free(ht->slots[i].value);
-        }
-        free(ht->slots);
-    }
-    ht->slots = NULL;
-    ht->count = 0;
-    ht->capacity = 0;
 }

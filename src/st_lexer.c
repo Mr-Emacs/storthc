@@ -16,7 +16,7 @@ ST_string_t ST_token_kind_to_string(ST_token_kind_t kind)
     case ST_TKEYWORD:   return ST_cstr_to_str("ST_TKEYWORD");
     case ST_TSYMBOL:    return ST_cstr_to_str("ST_TSYMBOL");
     case ST_TDOCCOMENT: return ST_cstr_to_str("ST_TDOCCOMENT");
-    default: ST_assert(1);
+    case ST_TCOUNT: default: ST_assert(1);
     }
 
     return (ST_string_t) {
@@ -25,8 +25,16 @@ ST_string_t ST_token_kind_to_string(ST_token_kind_t kind)
     };
 }
 
-b32 ST_iswhitespace(ST_lexer_t *l)
+b32 ST_iswhitespace(char c)
+{
+    static char buf[] = { '\r', '\n', '\t', ' ' };
+    ST_forrange(0, sizeof(buf))  if (c == buf[i]) return 0;
+    return -1;
+}
+
+void ST_lexer_consume_char(ST_lexer_t *l)
 {
     ST_unused(l);
-    return 0;
 }
+
+void ST_lexer_consume_peek(ST_lexer_t *l);
