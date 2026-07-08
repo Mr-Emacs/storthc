@@ -36,7 +36,7 @@ ST_string_t ST_trim_by_delim(ST_string_t *sv, char delim)
     return  new_sv;
 }
 
-b32 ST_read_entire_file(ST_string_t *sv, const char *path)
+b32 ST_read_entire_file(ST_arena_t *arena, ST_string_t *sv, const char *path)
 {
     ST_assert(path != NULL);
     FILE *f = fopen(path, "rb");
@@ -46,19 +46,9 @@ b32 ST_read_entire_file(ST_string_t *sv, const char *path)
     u32 file_size = (u32)ftell(f);
     fseek(f, 0, SEEK_SET);
 
-    sv->data = malloc(sizeof(*sv->data) * file_size);
-    ST_assert(sv->data != NULL);    
+    sv->data = ST_arena_push_zeroed(arena, sizeof(*sv->data) * file_size);
 
     if (fread((char *)sv->data, 1, file_size, f) <= 0) return -1;
     sv->len = file_size;
     return 0;
-}
-
-void ST_free_string(ST_string_t *sv)
-{
-    if (sv->data)
-    {
-        free(sv->data);
-        sv->len = 0;
-    }
 }

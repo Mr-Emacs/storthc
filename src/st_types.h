@@ -35,7 +35,7 @@ typedef double f64;
         for (void *it = (void *)(arr)->items[i]; ; it = 0)
 
 #define ST_forrange(m, n) \
-    for (u32 i = (m); i < (n); i++)                             \
+    for (u32 i = (m); i < (n); i++)
 
 #define ST_assert(expr)                                         \
     do {                                                        \

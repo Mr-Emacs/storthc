@@ -6,10 +6,11 @@ int main(void)
 {
     const char *path = "main.st";
     ST_string_t sv = {0};
-    if (ST_read_entire_file(&sv, path) < 0) return 1;
+    ST_arena_t *arena = ST_arena_alloc();
+    if (ST_read_entire_file(arena, &sv, path) < 0) return 1;
 
     printf(ST_sv_fmt, ST_sv_args(sv));
 
-    ST_free_string(&sv);
+    ST_arena_free(arena);
     return 0;
 }
