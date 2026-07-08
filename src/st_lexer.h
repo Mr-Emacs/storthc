@@ -31,6 +31,9 @@ typedef struct
 } ST_lexer_t;
 
 ST_string_t ST_token_kind_to_string(ST_token_kind_t kind);
-b32 ST_iswhitespace(ST_lexer_t *l);
+b32 ST_iswhitespace(char c);
+
+void ST_lexer_consume_char(ST_lexer_t *l);
+void ST_lexer_consume_peek(ST_lexer_t *l);
 
 #endif
